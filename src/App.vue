@@ -43,7 +43,7 @@ const choices = ref<Record<string, number>>({});
 const numbers = Array.from({ length: 10 }, (_, i) => i + 1); // Nombres de 1 à 10
 
 onMounted(() => {
-  socket.value = io("http://localhost:3000/");
+  socket.value = io("http://54.37.153.23:3000/");
 
   socket.value?.on("updateChoices", (data) => {
     choices.value = data;
