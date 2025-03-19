@@ -1,8 +1,32 @@
 <template>
   <div id="app">
     <h1>Vue.js avec Socket.IO</h1>
-    <button @click="sendMessage">Envoyer un message</button>
-    <p>{{ serverMessage }}</p>
+    
+    <div v-if="!joined">
+      <input v-model="room" placeholder="Nom de la room" />
+      <input v-model="username" placeholder="Votre pseudo" />
+      <button @click="joinRoom">Rejoindre</button>
+    </div>
+
+    <div v-else>
+      <h2>Room: {{ room }}</h2>
+      <h3>Votre pseudo: {{ username }}</h3>
+
+      <label>Choisissez un numéro :</label>
+      <select v-model="selectedNumber">
+        <option v-for="num in numbers" :key="num" :value="num">
+          {{ num }}
+        </option>
+      </select>
+      <button @click="chooseNumber">Valider</button>
+
+      <h2>Choix des utilisateurs :</h2>
+      <ul>
+        <li v-for="(num, user) in choices" :key="user">
+          {{ user }} a choisi : {{ num }}
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -10,18 +34,19 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { io, Socket } from "socket.io-client";
 
-// Typage correct de socket
 const socket = ref<Socket | null>(null);
-const serverMessage = ref<string>("");
+const room = ref("");
+const username = ref("");
+const joined = ref(false);
+const selectedNumber = ref(null);
+const choices = ref<Record<string, number>>({});
+const numbers = Array.from({ length: 10 }, (_, i) => i + 1); // Nombres de 1 à 10
 
-// Connexion au serveur Socket.IO
 onMounted(() => {
-  socket.value = io("http://54.37.153.23:3000/");
+  socket.value = io("http://localhost:3000/");
 
-  // Vérifier que socket.value n'est pas null avant d'utiliser .on()
-  socket.value?.on("message", (data: string) => {
-    console.log("Message reçu du serveur:", data);
-    serverMessage.value = data;
+  socket.value?.on("updateChoices", (data) => {
+    choices.value = data;
   });
 
   socket.value?.on("connect", () => {
@@ -33,20 +58,33 @@ onMounted(() => {
   });
 });
 
-// Nettoyage des écouteurs lors de la destruction du composant
 onBeforeUnmount(() => {
   if (socket.value) {
-    socket.value.off("message");
+    socket.value.off("updateChoices");
     socket.value.off("connect");
     socket.value.off("disconnect");
     socket.value.disconnect();
   }
 });
 
-// Fonction pour envoyer un message
-const sendMessage = () => {
-  if (socket.value) {
-    socket.value.emit("message", "je suis le client");
+const joinRoom = () => {
+  if (room.value && username.value) {
+    socket.value?.emit("joinRoom", room.value);
+    joined.value = true;
+  } else {
+    alert("Veuillez entrer un nom de room et un pseudo !");
+  }
+};
+
+const chooseNumber = () => {
+  if (selectedNumber.value !== null) {
+    socket.value?.emit("chooseNumber", {
+      room: room.value,
+      username: username.value,
+      number: selectedNumber.value,
+    });
+  } else {
+    alert("Veuillez choisir un numéro !");
   }
 };
 </script>
