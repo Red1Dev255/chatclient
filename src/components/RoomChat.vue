@@ -107,7 +107,6 @@ const sendMessage = () => {
 };
 
 socket.value?.on('newMessage', ({ username, message }) => {
-   console.log(username, message);
    messages.value.push({ username, message });
 });
 
