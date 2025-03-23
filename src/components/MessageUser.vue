@@ -3,7 +3,7 @@
     <Card>
       <template #title>
         <div class="col-12 text-center">
-          <i class="pi pi-comment"></i> Discussion </div>
+          <i class="pi pi-comment"></i> Messages </div>
       </template>
       <template #content>
         <div class="grid">
@@ -17,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import Card from 'primevue/card';
 import { ref } from 'vue';
 
 defineProps<{

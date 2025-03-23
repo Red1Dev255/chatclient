@@ -2,51 +2,61 @@
 
  <div class="m-5">
     <Panel header="Connexion" toggleable :collapsed="!collapsed">
-         <UserConnexion @joinRoomEmit="handleJoinRoom"/>
+         <UserConnexion @joinRoomEmit="handleJoinRoom" 
+         :isConnected='isConnected' 
+         />
     </Panel>
  </div>
+
+  <AfficheRoom :room="room" :username="username" />
 
   <div class="m-5">
     <Card>
       <template #title>
-        <div class="col-12 text-center">
-          <i class="pi pi-comment"></i> Chat
+        <div class="grid">
+          <div class="col-12 text-center">
+            <Button
+                @click="confirmDisconnect"
+                icon="pi pi-sign-out" 
+                class="p-button-rounded p-button-plain font-bold" 
+                v-tooltip.left="'Se déconnecter'"
+                :disabled="!isConnected"
+                v-if="isConnected"
+              />   
+          </div>
         </div>
       </template>
       <template #content>
-        <div class="grid">
-          <div class="col-12 text-center">Room: {{ room }}</div>
-          <div class="col-12 text-center">Username: {{ username }}</div>
+
+        <div class="col-12">
+          <div class="grid">
+              <div class="col-12 sm:col-9 md:col-10 lg:col-10">
+                <InputText
+                  v-model="message"
+                  placeholder="Votre message"
+                  class="p-3 w-full border-round-sm font-bold"
+                  @keydown.enter="sendMessage" 
+                  :disabled="!isConnected"
+                />
+              </div>
+
+              <div class="col-12 sm:col-3 md:col-2 lg:col-2">
+                <Button
+                  @click="sendMessage"
+                  icon="pi pi-send"
+                  iconPos="right"
+                  label="Envoyer"
+                  class="p-3 border-round-sm font-bold"
+                  :class="{ 'text-gray-500 surface-500': disabled }"
+                  :disabled="!isConnected"
+                />            
+                </div>
         </div>
-
-        <div class="grid">
-          <div class="col-10">
-            <InputText
-              v-model="message"
-              placeholder="Votre message"
-              class="p-3 w-full border-round-sm font-bold"
-               @keydown.enter="sendMessage" 
-            />
-          </div>
-
-          <div class="col-2">
-            <Button
-              @click="sendMessage"
-              icon="pi pi-send"
-              iconPos="right"
-              label="Envoyer"
-              class="p-3 border-round-sm font-bold"
-              :class="{ 'text-gray-500 surface-500': disabled }"
-              :disabled="disabled"
-
-            />            
-          </div>
         </div>
-
         <div class="grid">
 
          <div class="col-10 text-center">
-            <Message variant="simple" size="small" :severity="disabled ? 'error' : 'Success' ">{{ disabled ? 'Rejoindre une room afin de pouvoir envoyer des message':''}}</Message>
+            <Message variant="simple" size="small" :severity="disabled ? 'error' : 'Success' ">{{ disabled ? 'Rejoindre une room afin de pouvoir envoyer des messages':''}}</Message>
           </div>   
           </div>
 
@@ -57,25 +67,26 @@
 </template>
 
 <script setup lang="ts">
-import Card from 'primevue/card';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
 import { computed, ref } from 'vue';
 import socket from '../services/SocketIO';
 import { onMounted } from 'vue';
-import Message from 'primevue/message';
 import UserConnexion from "./UserConnexion.vue";
-import Panel from 'primevue/panel';
 import MessageUser from "./MessageUser.vue";
+import AfficheRoom from "./AfficheRoom.vue";
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+
+const confirm = useConfirm();
+const toast = useToast();
 
 const room = ref('');
 const username = ref('');
 const message = ref('');
 const messages = ref<any[]>([]);
 const disabled = ref(true);
-
 const toggleable = ref(false);
 
+const isConnected = ref(false);
 
 const collapsed = computed(() => {
   return disabled.value ;
@@ -85,16 +96,14 @@ const collapsed = computed(() => {
 const sendMessage = () => {
 
   if (message.value.trim() !== "") {
-
     socket.value?.emit("message", {
       room: room.value,
       username: username.value,
       message: message.value,
     });
-
-  } else {
-    alert("Veuillez saisir votre message !");
   }
+  message.value = '';
+
 };
 
 socket.value?.on('newMessage', ({ username, message }) => {
@@ -107,9 +116,45 @@ const handleJoinRoom = (data: { username: string, room: string }) => {
   username.value = data.username;
   disabled.value = false;
   messages.value = [];
+  isConnected.value = true; 
+  message.value = '';
   socket.value?.emit("join",  { username : username.value, room : room.value});
 };
 
 
+const seDeconnecter = () => {
+  disabled.value = true;
+  room.value = '';
+  username.value = '';
+  isConnected.value = false; 
+  messages.value = [];
+  message.value = '';
+  socket.value?.emit("leave", { username : username.value, room : room.value});
+};
+
+
+const confirmDisconnect = () => {
+    confirm.require({
+        message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-circle',
+        rejectProps: {
+            label: 'Annuler',
+            severity: 'danger',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Confirmer',
+            severity: 'success'
+        },
+        accept: () => {  
+          toast.add({ severity: 'info', summary: 'Connecté', detail: 'Déconnecté(e)', life: 3000 });
+          seDeconnecter();
+        },
+        reject: () => {
+            toast.add({ severity: 'error', summary: 'Annulé', detail: 'Déconnexion annulée', life: 3000 });
+        }
+    });
+};
 
 </script>
