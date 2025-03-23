@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { defineEmits } from 'vue';
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -53,7 +53,7 @@ const toast = useToast();
 const room = ref('');
 const username = ref('');
 
-const props = defineProps<{ isConnected: boolean }>();
+defineProps<{ isConnected: boolean }>();
 
 const connexion = () => {
   if (room.value && username.value) {

@@ -69,7 +69,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import socket from '../services/SocketIO';
-import { onMounted } from 'vue';
 import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
@@ -84,7 +83,6 @@ const username = ref('');
 const message = ref('');
 const messages = ref<any[]>([]);
 const disabled = ref(true);
-const toggleable = ref(false);
 
 const isConnected = ref(false);
 

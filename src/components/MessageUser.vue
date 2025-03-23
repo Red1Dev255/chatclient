@@ -17,8 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
 defineProps<{
   message: { username: string; message: string }[];
   myUsername: string;
