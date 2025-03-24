@@ -1,5 +1,7 @@
 <template>
 
+ <Toast position="top-center" group="tc" />
+
  <div class="m-5">
     <Panel header="Connexion" toggleable :collapsed="!collapsed">
          <UserConnexion @joinRoomEmit="handleJoinRoom" 
@@ -14,23 +16,24 @@
     <Card>
       <template #title>
         <div class="grid">
-          <div class="col-12 text-center">
-            <Button
-                @click="confirmDisconnect"
-                icon="pi pi-sign-out" 
-                class="p-button-rounded p-button-plain font-bold" 
-                v-tooltip.left="'Se déconnecter'"
-                :disabled="!isConnected"
-                v-if="isConnected"
-              />   
-          </div>
+             <div class="col-12 text-right">
+                <Button type="button" 
+                icon="pi pi-ellipsis-v" 
+                @click="toggle" 
+                aria-haspopup="true"
+                class="p-button-rounded p-button-plain font-bold mr-3"
+                 aria-controls="overlay_menu" />
+                <Menu ref="menu" id="overlay_menu"
+                :model="items" 
+                :popup="true" />
+            </div>
         </div>
       </template>
       <template #content>
 
         <div class="col-12">
           <div class="grid">
-              <div class="col-12 sm:col-9 md:col-10 lg:col-10">
+              <div class="col-12 sm:col-12 md:col-12 lg:col-12">
                 <InputText
                   v-model="message"
                   placeholder="Votre message"
@@ -39,31 +42,18 @@
                   :disabled="!isConnected"
                 />
               </div>
-
-              <div class="col-12 sm:col-3 md:col-2 lg:col-2">
-                <Button
-                  @click="sendMessage"
-                  icon="pi pi-send"
-                  iconPos="right"
-                  label="Envoyer"
-                  class="p-3 border-round-sm font-bold"
-                  :class="{ 'text-gray-500 surface-500': disabled }"
-                  :disabled="!isConnected"
-                />            
-                </div>
+              <div>
+                  <Message variant="simple" size="small" :severity="disabled ? 'error' : 'Success' ">{{ disabled ? 'Rejoindre une room afin de pouvoir envoyer des messages':''}}</Message>
+              </div>
         </div>
         </div>
-        <div class="grid">
 
-         <div class="col-10 text-center">
-            <Message variant="simple" size="small" :severity="disabled ? 'error' : 'Success' ">{{ disabled ? 'Rejoindre une room afin de pouvoir envoyer des messages':''}}</Message>
-          </div>   
-          </div>
+          <MessageUser :message="messages" :myUsername="username"/> 
 
       </template>
     </Card>
   </div>
-<MessageUser :message="messages" :myUsername="username"/> 
+
 </template>
 
 <script setup lang="ts">
@@ -74,6 +64,8 @@ import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import Menu from 'primevue/menu';
+
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -83,6 +75,16 @@ const username = ref('');
 const message = ref('');
 const messages = ref<any[]>([]);
 const disabled = ref(true);
+
+
+messages.value = [
+  { username: 'user1', message: 'message1' },
+  { username: 'user2', message: 'message2' },
+  { username: 'user1', message: 'message2' },
+  { username: 'user1', message: 'message3' },
+  { username: 'user2', message: 'message2' },
+  { username: 'user2', message: 'message3' },
+  ]
 
 const isConnected = ref(false);
 
@@ -152,6 +154,54 @@ const confirmDisconnect = () => {
             toast.add({ severity: 'error', summary: 'Annulé', detail: 'Déconnexion annulée', life: 3000 });
         }
     });
+};
+
+const getInformations = () => {
+  const messageInf = "Veuillez noter qu'un rafraîchissement de la page entraînera systématiquement la perte de toutes les données. De même, toute déconnexion entraînera également la suppression de vos informations actuelles. Il est donc important de ne pas quitter la page ou de se déconnecter si vous souhaitez conserver vos données.";
+  confirm.require({
+        message: messageInf,
+        header: 'Important',
+        icon: 'pi pi-exclamation-circle',
+        rejectProps: {
+            label: 'Fermer',
+            severity: 'danger',
+            outlined: true
+        },
+        acceptProps: {
+            label: "J'ai compris",
+            severity: 'success'
+        },
+    });
+  
+  };
+
+
+// menuItems calculé de façon réactive
+const menuItems = computed(() => [
+  ...(isConnected.value ? [
+    {
+      label: 'Se déconnecter',
+      icon: 'pi pi-sign-out',
+      command: () => { confirmDisconnect(); }
+    }
+  ] : []),
+  {
+    label: 'Information',
+    icon: 'pi pi-info',
+    command: () => { getInformations(); }
+  }
+]);
+
+const menu = ref();
+const items = computed(() => [
+  {
+    label: 'Options',
+    items: menuItems.value
+  }
+]);
+
+const toggle = (event: any) => {
+  menu.value.toggle(event);
 };
 
 </script>
