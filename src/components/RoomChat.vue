@@ -40,7 +40,7 @@
               </div>
 
               <div class="col text-left">
-                  <AfficheImoji v-model="message" :disabled="!isConnected" />
+                  <AfficheEmoji v-model="message" :disabled="!isConnected" />
               </div>
 
             
@@ -71,7 +71,7 @@ import socket from "../services/SocketIO";
 import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
-import AfficheImoji from "./AfficheImoji.vue";
+import AfficheEmoji from "./AfficheEmoji.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import Menu from "primevue/menu";
