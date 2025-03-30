@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import 'primeicons/primeicons.css';
-
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 import 'primeflex/primeflex.css'; 
+import './style.css'
 
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
@@ -24,6 +24,12 @@ import Toast from 'primevue/toast';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import FloatLabel from 'primevue/floatlabel';
+import  Popover  from "primevue/popover";
+import Menu from "primevue/menu";
+import Menubar from "primevue/menubar";
+
+import InputGroup from "primevue/inputgroup";
+import InputGroupAddon from "primevue/inputgroupaddon";
 
 
 const app = createApp(App);
@@ -48,6 +54,11 @@ app.component('Toast', Toast);
 app.component('IconField', IconField);
 app.component('InputIcon', InputIcon);
 app.component('FloatLabel', FloatLabel);
+app.component('Popover', Popover);
+app.component('Menu', Menu);
+app.component('Menubar', Menubar);
+app.component('InputGroup', InputGroup);
+app.component('InputGroupAddon', InputGroupAddon);
 
 
 

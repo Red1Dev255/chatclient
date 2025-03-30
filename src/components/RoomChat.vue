@@ -18,35 +18,31 @@
         <Menubar :model="items" />
       </template>
       <template #content>
-        <div class="grid">
-
-          <div class="col-12">
-              <InputText
-                v-model="message"
-                placeholder="Votre message"
-                class="w-full p-3"
-                @keydown.enter="sendMessage"
+        <div>
+          <InputGroup>
+            <InputText
+              v-model="message"
+              placeholder="Votre message"
+              @keydown.enter="sendMessage"
+              :disabled="!isConnected"
+            />
+            <InputGroupAddon>
+              <AfficheEmoji v-model="message" :isConnected="isConnected" :disabled="!isConnected" />
+            </InputGroupAddon>
+            <InputGroupAddon>
+              <Button
+                @click="sendMessage"
+                label="📨"
+                class="bg-transparent border-none p-3"
                 :disabled="!isConnected"
+                v-tooltip.bottom="'Envoyer'"
+                :class="{'p-button-click' : isConnected}"
               />
-          </div>
-
-            <div class="col text-right">
-                  <Button
-                    @click="sendMessage"
-                    label="📨"
-                    class="bg-transparent p-3"
-                    :disabled="!isConnected"
-                  />
-              </div>
-
-              <div class="col text-left">
-                  <AfficheEmoji v-model="message" :disabled="!isConnected" />
-              </div>
-
-            
+            </InputGroupAddon>
+          </InputGroup>
         </div>
 
-        <div>
+        <div class="m-2">
           <Message
             variant="simple"
             size="small"
@@ -74,29 +70,17 @@ import AfficheRoom from "./AfficheRoom.vue";
 import AfficheEmoji from "./AfficheEmoji.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import Menu from "primevue/menu";
-import Popover from "primevue/popover";
-import Menubar from "primevue/menubar";
+
 
 const confirm = useConfirm();
 const toast = useToast();
-
 const room = ref("");
 const username = ref("");
 const message = ref("");
 const messages = ref<any[]>([]);
 const disabled = ref(true);
-
-messages.value = [
-  { username: "user1", message: "message1" },
-  { username: "user2", message: "message2" },
-  { username: "user1", message: "message2" },
-  { username: "user1", message: "message3" },
-  { username: "user2", message: "message2" },
-  { username: "user2", message: "message3" },
-];
-
 const isConnected = ref(false);
+
 
 const collapsed = computed(() => {
   return disabled.value;
@@ -118,15 +102,73 @@ socket.value?.on("newMessage", ({ username, message }) => {
   messages.value.push({ username, message });
 });
 
+
 const handleJoinRoom = (data: { username: string; room: string }) => {
-  room.value = data.room;
-  username.value = data.username;
-  disabled.value = false;
-  messages.value = [];
-  isConnected.value = true;
-  message.value = "";
-  socket.value?.emit("join", { username: username.value, room: room.value });
+  // Marque l'événement de succès comme non reçu initialement
+  let joinSuccessReceived = false;
+
+  // Fonction pour gérer le succès de la connexion
+  const onJoinSuccess = ({ success }) => {
+    joinSuccessReceived = true; // Marquer que la réponse a été reçue
+
+    if (success) {
+      console.log("Vous avez bien rejoint la salle !");
+      // Mettre à jour l'interface après la réussite
+      room.value = data.room;
+      username.value = data.username;
+      message.value = "";
+      disabled.value = false;
+      messages.value = [];
+      isConnected.value = true;
+      toast.add({
+        severity: "success",
+        summary: "Connexion réussie",
+        detail: "Vous êtes connecté(e) à la salle : " + data.room,
+        life: 3000,
+      });
+    } else {
+      toast.add({
+        severity: "error",
+        summary: "Erreur de connexion",
+        detail: "Impossible de rejoindre la salle : " + data.room,
+        life: 3000,
+      });
+    }
+    // Après avoir reçu la réponse, on supprime l'événement
+    socket.value?.removeListener("joinSuccess", onJoinSuccess);
+  };
+
+  // Émettre l'événement 'join' au serveur
+  socket.value?.emit("join", { username: data.username, room: data.room });
+
+  // Enregistrer le gestionnaire d'événement pour 'joinSuccess'
+  socket.value?.on("joinSuccess", onJoinSuccess);
+
+  // Ajouter un délai d'attente de 3 secondes (ou la durée que tu préfères)
+  setTimeout(() => {
+    if (!joinSuccessReceived) {
+      toast.add({
+        severity: "warn",
+        summary: "Alerte",
+        detail: "Le serveur ne répond pas. Veuillez réessayer.",
+        life: 3000,
+      });
+      isConnected.value = false;  // Mettre l'état de connexion à false
+      disabled.value = true;  // Désactiver les actions de l'utilisateur si l'opération échoue
+      
+      // Nettoyer l'événement joinSuccess si le délai est atteint sans réponse
+      socket.value?.removeListener("joinSuccess", onJoinSuccess);
+    }
+  }, 3000);  // Attendre 3 secondes avant d'annuler
 };
+
+
+const getErrorConnect = () =>{
+  // Gestion de l'erreur de connexion
+socket.value?.on('connect_error', (error) => {
+    console.error("Erreur de connexion : ça race", error.message);
+});
+} 
 
 const seDeconnecter = () => {
   disabled.value = true;
@@ -154,8 +196,8 @@ const confirmDisconnect = () => {
     },
     accept: () => {
       toast.add({
-        severity: "info",
-        summary: "Connecté",
+        severity: "warn",
+        summary: "Déconnexion",
         detail: "Déconnecté(e)",
         life: 3000,
       });
@@ -220,3 +262,4 @@ const items = computed(() => [
   },
 ]);
 </script>
+

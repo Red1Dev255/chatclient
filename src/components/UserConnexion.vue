@@ -10,6 +10,7 @@
                   v-model="room"
                   :disabled='isConnected'
                   placeholder = "Room"
+                  @keydown.enter="connexion"
                   class="p-3 border-round-sm font-bold col-12 lg:col-6 sm:col-12 md:col-12"
                 />
             </div>
@@ -18,6 +19,7 @@
                     v-model="username"
                     :disabled='isConnected'
                     placeholder="Username"
+                    @keydown.enter="connexion"
                     class=" p-3 border-round-sm font-bold col-12 lg:col-6 sm:col-12 md:col-12"
                   />
             </div>
@@ -30,9 +32,11 @@
                     icon="pi pi-user"
                     iconPos="left"
                     label="Rejoindre"
-                    class="p-3 border-round-sm font-bold col-3 col-12 lg:col-6 sm:col-12 md:col-12"
+                    class="p-3 text-black-alpha-90 border-round-sm font-bold col-3 col-12 lg:col-6 sm:col-12 md:col-12"
                     :disabled='isConnected'
-                    :class="{ 'text-gray-500 surface-500': isConnected }"
+                    :class="{ 'text-gray-500 surface-500': isConnected, 
+                    'p-button-click' : !isConnected 
+                    }"
                   />
                 </div>
            </div>
@@ -82,7 +86,6 @@ const confirm1 = () => {
         },
         accept: () => {  
           confirm.close();
-          toast.add({ severity: 'info', summary: 'Connecté', detail: 'Vous êtes connecté(e)', life: 3000 });
           emit('joinRoomEmit', { username: username.value, room: room.value });  
         },
         reject: () => {
