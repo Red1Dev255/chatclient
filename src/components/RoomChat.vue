@@ -1,7 +1,7 @@
 <template>
   <Toast position="top-center" group="tc" />
 
-  <div class="m-5">
+  <div class="mt-2">
     <Panel header="Connexion" toggleable :collapsed="!collapsed">
       <UserConnexion
         @joinRoomEmit="handleJoinRoom"
@@ -12,8 +12,8 @@
 
   <AfficheRoom :room="room" :username="username" />
 
-  <div class="m-5">
-    <Card style="margin: 10px">
+  <div class="mt-2">
+    <Card >
       <template #title>
         <Menubar :model="items" />
       </template>
