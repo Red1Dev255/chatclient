@@ -17,8 +17,8 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import EmojiPicker from 'vue3-emoji-picker';
-import 'vue3-emoji-picker/css'
+
+
 
 
 const message = defineModel<string>();

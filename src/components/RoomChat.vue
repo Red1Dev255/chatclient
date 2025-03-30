@@ -103,12 +103,17 @@ socket.value?.on("newMessage", ({ username, message }) => {
 });
 
 
+interface JoinSuccessResponse {
+  success: boolean;
+  // Add other properties if needed
+}
+
 const handleJoinRoom = (data: { username: string; room: string }) => {
   // Marque l'événement de succès comme non reçu initialement
   let joinSuccessReceived = false;
 
   // Fonction pour gérer le succès de la connexion
-  const onJoinSuccess = ({ success }) => {
+  const onJoinSuccess = ({ success } :JoinSuccessResponse) => {
     joinSuccessReceived = true; // Marquer que la réponse a été reçue
 
     if (success) {
@@ -163,12 +168,7 @@ const handleJoinRoom = (data: { username: string; room: string }) => {
 };
 
 
-const getErrorConnect = () =>{
-  // Gestion de l'erreur de connexion
-socket.value?.on('connect_error', (error) => {
-    console.error("Erreur de connexion : ça race", error.message);
-});
-} 
+
 
 const seDeconnecter = () => {
   disabled.value = true;
