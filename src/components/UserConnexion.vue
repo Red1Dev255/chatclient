@@ -31,7 +31,7 @@
                     @click="connexion"
                     icon="pi pi-user"
                     iconPos="left"
-                    label="Rejoindre"
+                    label="Join"
                     class="p-3 text-black-alpha-90 border-round-sm font-bold col-3 col-12 lg:col-6 sm:col-12 md:col-12"
                     :disabled='isConnected'
                     :class="{ 'text-gray-500 surface-500': isConnected, 
@@ -63,8 +63,7 @@ const connexion = () => {
   if (room.value && username.value) {
      confirm1();
   } else {
-    toast.add({ severity: 'error', summary: 'Username/Room vides', detail: 'Veuillez saisir votre username/room', life: 3000 });
-  }
+    toast.add({ severity: 'error', summary: 'Empty Username/Room', detail: 'Please enter your username/room', life: 3000 });}
 };
 
 
@@ -76,12 +75,12 @@ const confirm1 = () => {
         header: 'Confirmation',
         icon: 'pi pi-exclamation-circle',
         rejectProps: {
-            label: 'Annuler',
+            label: 'Cancel',
             severity: 'danger',
             outlined: true
         },
         acceptProps: {
-            label: 'Confirmer',
+            label: 'Connect',
             severity: 'success'
         },
         accept: () => {  
@@ -89,7 +88,7 @@ const confirm1 = () => {
           emit('joinRoomEmit', { username: username.value, room: room.value });  
         },
         reject: () => {
-            toast.add({ severity: 'error', summary: 'Annulé', detail: 'Connexion annulée', life: 3000 });
+            toast.add({ severity: 'warn', summary: 'Cancelled', detail: 'Connection cancelled', life: 3000 });
         }
     });
 };

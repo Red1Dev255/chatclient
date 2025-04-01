@@ -25,17 +25,18 @@
               placeholder="Votre message"
               @keydown.enter="sendMessage"
               :disabled="!isConnected"
+              maxlength="214"
             />
-            <InputGroupAddon>
+            <!-- <InputGroupAddon>
               <AfficheEmoji v-model="message" :isConnected="isConnected" :disabled="!isConnected" />
-            </InputGroupAddon>
+            </InputGroupAddon> -->
             <InputGroupAddon>
               <Button
                 @click="sendMessage"
                 label="📨"
                 class="bg-transparent border-none p-3"
                 :disabled="!isConnected"
-                v-tooltip.bottom="'Envoyer'"
+                v-tooltip.bottom="'Send'"
                 :class="{'p-button-click' : isConnected}"
               />
             </InputGroupAddon>
@@ -48,8 +49,8 @@
             size="small"
             :severity="disabled ? 'error' : 'Success'"
             >{{
-              disabled
-                ? "Une connexion est requise pour envoyer des messages"
+              !isConnected
+                ? "A connection is required to send messages"
                 : ""
             }}</Message
           >
@@ -67,45 +68,103 @@ import socket from "../services/SocketIO";
 import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
-import AfficheEmoji from "./AfficheEmoji.vue";
+// import AfficheEmoji from "./AfficheEmoji.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import { generateRSAKeys, decryptMessage, encryptMessage } from '../services/rsaService';
 
+
+const { privateKey, publicKey } = generateRSAKeys();
 
 const confirm = useConfirm();
 const toast = useToast();
+
 const room = ref("");
 const username = ref("");
+
 const message = ref("");
-const messages = ref<any[]>([]);
 const disabled = ref(true);
 const isConnected = ref(false);
 
+
+interface MessageUserDecrypted {
+  username: string;
+  message: string;
+}
+
+interface UserKey {
+  username: string;
+  publicKey: string;
+}
+
+interface MessageUser {
+  username: string;
+  encryptedMessage: string;
+}
+
+const usersPublicKeys = ref<UserKey[]>([]);
+const messages = ref<MessageUserDecrypted[]>([]);
 
 const collapsed = computed(() => {
   return disabled.value;
 });
 
-// Fonction pour envoyer un message
+
+
+//////////////////////////////////////////////////// send de message
+
 const sendMessage = () => {
-  if (message.value.trim() !== "") {
-    socket.value?.emit("message", {
+ if (message.value.trim() !== "") {
+    let encryptedMessagesRoom = ref<MessageUser[]>([]);
+    for(const userKey of usersPublicKeys.value) {
+      const encryptedMessage = encryptMessage(userKey.publicKey, message.value);
+      encryptedMessagesRoom.value.push({
+        username: userKey.username,
+        encryptedMessage: encryptedMessage,
+      });
+    }
+
+    socket.value?.emit("newMessageSend", {
       room: room.value,
-      username: username.value,
-      message: message.value,
+      usernameSender: username.value,
+      encryptedMessagesRoom: encryptedMessagesRoom.value,
     });
   }
   message.value = "";
 };
 
-socket.value?.on("newMessage", ({ username, message }) => {
-  messages.value.push({ username, message });
+//////////////////////////////////////////////////// get public keys
+
+
+socket.value?.on("newListKey", (data) => {
+  const usersKeys = data.usersKeys; 
+  if (Array.isArray(usersKeys)) { 
+    usersPublicKeys.value = usersKeys;
+  } else {
+    console.error("Erreur : usersKeys n'est pas un tableau", usersKeys);
+  }
 });
 
+//////////////////////////////////////////////////// Receive message
+
+socket.value?.on("newMessage", ({ usernameSender, encryptedMessagesRoom}) => {
+  for (let coupleMessUser of encryptedMessagesRoom) {
+    if (coupleMessUser.username === username.value) {
+      console.log("add message ", usernameSender, " : ", coupleMessUser.encryptedMessage);
+      const decryptedMessage = decryptMessage(privateKey, coupleMessUser.encryptedMessage);
+      messages.value.push({
+        username: usernameSender,
+        message: decryptedMessage,
+      });
+    }
+}
+});
+
+//////////////////////////////////////////////////// new Connected user
 
 interface JoinSuccessResponse {
   success: boolean;
-  // Add other properties if needed
+  detailsMessage: string;
 }
 
 const handleJoinRoom = (data: { username: string; room: string }) => {
@@ -113,11 +172,10 @@ const handleJoinRoom = (data: { username: string; room: string }) => {
   let joinSuccessReceived = false;
 
   // Fonction pour gérer le succès de la connexion
-  const onJoinSuccess = ({ success } :JoinSuccessResponse) => {
+  const onJoinSuccess = ({ success, detailsMessage } :JoinSuccessResponse) => {
     joinSuccessReceived = true; // Marquer que la réponse a été reçue
 
     if (success) {
-      console.log("Vous avez bien rejoint la salle !");
       // Mettre à jour l'interface après la réussite
       room.value = data.room;
       username.value = data.username;
@@ -127,78 +185,72 @@ const handleJoinRoom = (data: { username: string; room: string }) => {
       isConnected.value = true;
       toast.add({
         severity: "success",
-        summary: "Connexion réussie",
-        detail: "Vous êtes connecté(e) à la salle : " + data.room,
+        summary: "Connected",
+        detail: detailsMessage,
         life: 3000,
       });
     } else {
       toast.add({
         severity: "error",
-        summary: "Erreur de connexion",
-        detail: "Impossible de rejoindre la salle : " + data.room,
+        summary: "Failed to connect",
+        detail: detailsMessage,
         life: 3000,
       });
     }
-    // Après avoir reçu la réponse, on supprime l'événement
     socket.value?.removeListener("joinSuccess", onJoinSuccess);
   };
 
-  // Émettre l'événement 'join' au serveur
-  socket.value?.emit("join", { username: data.username, room: data.room });
-
-  // Enregistrer le gestionnaire d'événement pour 'joinSuccess'
+  socket.value?.emit("join", { username: data.username, room: data.room, publicKey : publicKey });
   socket.value?.on("joinSuccess", onJoinSuccess);
 
-  // Ajouter un délai d'attente de 3 secondes (ou la durée que tu préfères)
   setTimeout(() => {
     if (!joinSuccessReceived) {
       toast.add({
-        severity: "warn",
-        summary: "Alerte",
-        detail: "Le serveur ne répond pas. Veuillez réessayer.",
+        severity: "danger",
+        summary: "Connection failed",
+        detail: "The server did not respond in time. Please try again.",
         life: 3000,
       });
-      isConnected.value = false;  // Mettre l'état de connexion à false
-      disabled.value = true;  // Désactiver les actions de l'utilisateur si l'opération échoue
+      isConnected.value = false;  
+      disabled.value = true; 
       
-      // Nettoyer l'événement joinSuccess si le délai est atteint sans réponse
       socket.value?.removeListener("joinSuccess", onJoinSuccess);
     }
-  }, 3000);  // Attendre 3 secondes avant d'annuler
+  }, 3000);  // wait 3 secondes before checking if the response was received
 };
 
 
-
+//////////////////////////////////////////////////// disconnect
 
 const seDeconnecter = () => {
+  socket.value?.emit("leave", { username: username.value, room: room.value });
   disabled.value = true;
   room.value = "";
   username.value = "";
   isConnected.value = false;
   messages.value = [];
   message.value = "";
-  socket.value?.emit("leave", { username: username.value, room: room.value });
 };
 
 const confirmDisconnect = () => {
   confirm.require({
-    message: "Êtes-vous sûr de vouloir vous déconnecter ?",
+    message: "Are you sure you want to disconnect?",
     header: "Confirmation",
     icon: "pi pi-exclamation-circle",
     rejectProps: {
-      label: "Annuler",
+      label: "Cancel",
       severity: "danger",
       outlined: true,
     },
     acceptProps: {
-      label: "Confirmer",
+      label: "Accept",
       severity: "success",
     },
     accept: () => {
       toast.add({
         severity: "warn",
-        summary: "Déconnexion",
-        detail: "Déconnecté(e)",
+        summary: "Disconnected",
+        detail: "Disconnected from the room",
         life: 3000,
       });
       seDeconnecter();
@@ -206,39 +258,42 @@ const confirmDisconnect = () => {
     reject: () => {
       toast.add({
         severity: "error",
-        summary: "Annulé",
-        detail: "Déconnexion annulée",
+        summary: "Cancelled",
+        detail: "Disconnection cancelled",
         life: 3000,
       });
     },
   });
 };
 
+
+//////////////////////////////////////////////////// application informations
+
 const getInformations = () => {
   const messageInf =
-    "Veuillez noter qu'un rafraîchissement de la page entraînera systématiquement la perte de toutes les données. De même, toute déconnexion entraînera également la suppression de vos informations actuelles. Il est donc important de ne pas quitter la page ou de se déconnecter si vous souhaitez conserver vos données.";
+    "Please note that refreshing the page will systematically result in the loss of all data. Similarly, any disconnection will also lead to the deletion of your current information. Therefore, it is important not to leave the page or disconnect if you wish to retain your data.";
   confirm.require({
     message: messageInf,
-    header: "Important",
+    header: "Confirm",
     icon: "pi pi-exclamation-circle",
     rejectProps: {
-      label: "Fermer",
+      label: "Cancel",
       severity: "danger",
       outlined: true,
     },
     acceptProps: {
-      label: "J'ai compris",
+      label: "I understand",
       severity: "success",
     },
   });
 };
 
-// menuItems calculé de façon réactive
+/// Menu items for the menubar
 const menuItems = computed(() => [
   ...(isConnected.value
     ? [
         {
-          label: "Se déconnecter",
+          label: "Disconnect",
           icon: "pi pi-sign-out",
           command: () => {
             confirmDisconnect();
@@ -247,7 +302,7 @@ const menuItems = computed(() => [
       ]
     : []),
   {
-    label: "Information",
+    label: "Informations",
     icon: "pi pi-info",
     command: () => {
       getInformations();
