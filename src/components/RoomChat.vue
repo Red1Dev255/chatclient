@@ -267,6 +267,23 @@ const confirmDisconnect = () => {
 };
 
 
+// const handleBeforeUnload = (event) => {
+//   event.preventDefault();
+//   // Certains navigateurs nécessitent que cette ligne soit ajoutée pour afficher une boîte de dialogue personnalisée.
+//   socket.value?.emit("leave", { username: username.value, room: room.value });
+//   event.returnValue = "Are you sure you want to leave? Your data will be lost.";
+// };
+
+// onMounted(() => {
+//   // Ajouter l'événement avant le démontage du composant
+//   window.addEventListener('beforeunload', handleBeforeUnload);
+// });
+
+// onBeforeUnmount(() => {
+//   // Supprimer l'événement lorsque le composant est démonté
+//   window.removeEventListener('beforeunload', handleBeforeUnload);
+// });
+
 //////////////////////////////////////////////////// application informations
 
 const getInformations = () => {
