@@ -88,7 +88,7 @@ const confirm1 = () => {
           emit('joinRoomEmit', { username: username.value, room: room.value });  
         },
         reject: () => {
-            toast.add({ severity: 'warn', summary: 'Cancelled', detail: 'Connection cancelled', life: 3000 });
+            toast.add({ severity: 'error', summary: 'Cancelled', detail: 'Connection cancelled', life: 3000 });
         }
     });
 };

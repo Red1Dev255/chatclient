@@ -1,6 +1,5 @@
 <template>
-  <Toast position="top-center" group="tc" />
-
+  <Toast/>
   <div class="mt-2">
     <Panel header="Connexion" toggleable :collapsed="!collapsed">
       <UserConnexion
@@ -63,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import socket from "../services/SocketIO";
 import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
@@ -267,7 +266,7 @@ const confirmDisconnect = () => {
 };
 
 
-// const handleBeforeUnload = (event) => {
+// const handleBeforeUnload = (event:any) => {
 //   event.preventDefault();
 //   // Certains navigateurs nécessitent que cette ligne soit ajoutée pour afficher une boîte de dialogue personnalisée.
 //   socket.value?.emit("leave", { username: username.value, room: room.value });
