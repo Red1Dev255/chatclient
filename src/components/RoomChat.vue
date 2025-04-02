@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import socket from "../services/SocketIO";
 import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
