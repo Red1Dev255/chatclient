@@ -26,9 +26,9 @@
               :disabled="!isConnected"
               maxlength="214"
             />
-            <!-- <InputGroupAddon>
+            <InputGroupAddon>
               <AfficheEmoji v-model="message" :isConnected="isConnected" :disabled="!isConnected" />
-            </InputGroupAddon> -->
+            </InputGroupAddon>
             <InputGroupAddon>
               <Button
                 @click="sendMessage"
@@ -62,16 +62,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import socket from "../services/SocketIO";
 import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
-// import AfficheEmoji from "./AfficheEmoji.vue";
+import AfficheEmoji from "./AfficheEmoji.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { generateRSAKeys, decryptMessage, encryptMessage } from '../services/rsaService';
+import { checkIfServerDown } from "../services/UtilsFunctions";
+import { join } from "path";
 
+const lastPingToServer = ref(0);
 
 const { privateKey, publicKey } = generateRSAKeys();
 
@@ -108,11 +111,19 @@ const collapsed = computed(() => {
   return disabled.value;
 });
 
+//////////////////////////////////// Server ping
 
+socket.value?.on("serverIsOk", (isOk) => {
+lastPingToServer.value = new Date().getTime();
+console.log("server is ok : " + isOk);
+});
 
 //////////////////////////////////////////////////// send de message
 
 const sendMessage = () => {
+
+  if(!getServerStatus()) { return ;}
+
  if (message.value.trim() !== "") {
     let encryptedMessagesRoom = ref<MessageUser[]>([]);
     for(const userKey of usersPublicKeys.value) {
@@ -140,7 +151,7 @@ socket.value?.on("newListKey", (data) => {
   if (Array.isArray(usersKeys)) { 
     usersPublicKeys.value = usersKeys;
   } else {
-    console.error("Erreur : usersKeys n'est pas un tableau", usersKeys);
+    console.error("Error : userKeys is not an array", usersKeys);
   }
 });
 
@@ -149,7 +160,6 @@ socket.value?.on("newListKey", (data) => {
 socket.value?.on("newMessage", ({ usernameSender, encryptedMessagesRoom}) => {
   for (let coupleMessUser of encryptedMessagesRoom) {
     if (coupleMessUser.username === username.value) {
-      console.log("add message ", usernameSender, " : ", coupleMessUser.encryptedMessage);
       const decryptedMessage = decryptMessage(privateKey, coupleMessUser.encryptedMessage);
       messages.value.push({
         username: usernameSender,
@@ -161,19 +171,17 @@ socket.value?.on("newMessage", ({ usernameSender, encryptedMessagesRoom}) => {
 
 //////////////////////////////////////////////////// new Connected user
 
-interface JoinSuccessResponse {
-  success: boolean;
-  detailsMessage: string;
-}
+
 
 const handleJoinRoom = (data: { username: string; room: string }) => {
-  // Marque l'événement de succès comme non reçu initialement
-  let joinSuccessReceived = false;
 
-  // Fonction pour gérer le succès de la connexion
-  const onJoinSuccess = ({ success, detailsMessage } :JoinSuccessResponse) => {
-    joinSuccessReceived = true; // Marquer que la réponse a été reçue
-
+  let joinRoom = true;
+  if(!getServerStatus()) { return; }
+  
+  if(joinRoom){
+    socket.value?.emit("join", { username: data.username, room: data.room, publicKey : publicKey });
+    joinRoom = false;
+    socket.value?.on("joinSuccess", ( { success, detailsMessage})=>{
     if (success) {
       // Mettre à jour l'interface après la réussite
       room.value = data.room;
@@ -182,6 +190,7 @@ const handleJoinRoom = (data: { username: string; room: string }) => {
       disabled.value = false;
       messages.value = [];
       isConnected.value = true;
+      lastPingToServer.value = new Date().getTime();
       toast.add({
         severity: "success",
         summary: "Connected",
@@ -196,32 +205,26 @@ const handleJoinRoom = (data: { username: string; room: string }) => {
         life: 3000,
       });
     }
-    socket.value?.removeListener("joinSuccess", onJoinSuccess);
-  };
+    joinRoom = true;
+  });
+  } else {
+    toast.add({
+      severity: "error",
+      summary: "Connection",
+      detail: "Connection in progress",
+      life: 3000,
+    });
+  }
 
-  socket.value?.emit("join", { username: data.username, room: data.room, publicKey : publicKey });
-  socket.value?.on("joinSuccess", onJoinSuccess);
-
-  setTimeout(() => {
-    if (!joinSuccessReceived) {
-      toast.add({
-        severity: "danger",
-        summary: "Connection failed",
-        detail: "The server did not respond in time. Please try again.",
-        life: 3000,
-      });
-      isConnected.value = false;  
-      disabled.value = true; 
-      
-      socket.value?.removeListener("joinSuccess", onJoinSuccess);
-    }
-  }, 3000);  // wait 3 secondes before checking if the response was received
+  
 };
-
 
 //////////////////////////////////////////////////// disconnect
 
-const seDeconnecter = () => {
+const disConnect = () => {
+
+if(!getServerStatus()) { return}
+
   socket.value?.emit("leave", { username: username.value, room: room.value });
   disabled.value = true;
   room.value = "";
@@ -229,6 +232,13 @@ const seDeconnecter = () => {
   isConnected.value = false;
   messages.value = [];
   message.value = "";
+
+  toast.add({
+    severity: "error",
+    summary: "Disconnected",
+    detail: "Disconnected from the room",
+    life: 3000,
+  });
 };
 
 const confirmDisconnect = () => {
@@ -246,13 +256,7 @@ const confirmDisconnect = () => {
       severity: "success",
     },
     accept: () => {
-      toast.add({
-        severity: "warn",
-        summary: "Disconnected",
-        detail: "Disconnected from the room",
-        life: 3000,
-      });
-      seDeconnecter();
+      disConnect();
     },
     reject: () => {
       toast.add({
@@ -332,5 +336,21 @@ const items = computed(() => [
     items: menuItems.value,
   },
 ]);
+
+////////////////////////////////////: verify if the server is down
+
+const getServerStatus = () => {
+  if (checkIfServerDown(lastPingToServer.value) && lastPingToServer.value !== 0) {
+    toast.add({
+      severity: "error",
+      summary: "Server Down",
+      detail: "The server is down, please try again later.",
+      life: 3000,
+    });
+    return false;
+  } 
+  return true;
+};
+
 </script>
 
