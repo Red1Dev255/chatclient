@@ -72,7 +72,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { generateRSAKeys, decryptMessage, encryptMessage } from '../services/rsaService';
 import { checkIfServerDown } from "../services/UtilsFunctions";
-import { join } from "path";
+
 
 const lastPingToServer = ref(0);
 
