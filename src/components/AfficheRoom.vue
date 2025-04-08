@@ -5,6 +5,14 @@
                     <div class="grid">
                         <div class="col-12 text-center"><i class="pi pi-home"></i>  Room: {{ room }}</div>
                         <div class="col-12 text-center"><i class="pi pi-user"></i> Username: {{ username }}</div>
+                        <div class="col-12 text-center">
+                        <i class="pi pi-home"></i> Connected Users: 
+                            <Select placeholder="connected user" :options="connectedUser">
+                                <template #empty>
+                                   No connected user
+                                </template>
+                            </Select>
+                        </div>
                     </div>
                 </template>
             </Card>
@@ -16,7 +24,7 @@
 defineProps<{
   room: string;
   username: string;
+  connectedUser :string[];
 }>();
-
 
 </script>
