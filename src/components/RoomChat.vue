@@ -15,7 +15,7 @@
 
           
 
-  <AfficheRoom :room="roomLocal" :username="usernameLocal" />
+  <AfficheRoom :room="roomLocal" :connected-user="connectedUser" :username="usernameLocal" />
   <div class="mt-2">
     <Card>
       <template #title>
@@ -95,6 +95,7 @@ const toast = useToast();
 
 const roomLocal = ref("");
 const usernameLocal = ref("");
+const connectedUser = ref(Array<string>());
 
 const message = ref("");
 const disabled = ref(true);
@@ -152,9 +153,10 @@ const sendMessage = () => {
 
 socket.value?.on("newListKey", (data) => {
   const usersKeys = data.usersKeys;
-
+  // let newConnectedUser = Array<string>();
   if (Array.isArray(usersKeys)) {
     usersPublicKeys.value = usersKeys;
+    connectedUser.value = usersKeys.map((userKey) => userKey.username);
   } else {
     console.error("Error : userKeys is not an array", usersKeys);
   }

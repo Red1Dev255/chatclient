@@ -33,6 +33,9 @@ import InputGroupAddon from "primevue/inputgroupaddon";
 import '../node_modules/vue3-emoji-picker/dist/style.css';
 import EmojiPicker from 'vue3-emoji-picker';
 
+import Select from 'primevue/select';
+
+
 
 const app = createApp(App);
 app.use(PrimeVue, {
@@ -62,6 +65,7 @@ app.component('Menubar', Menubar);
 app.component('InputGroup', InputGroup);
 app.component('InputGroupAddon', InputGroupAddon);
 app.component('EmojiPicker', EmojiPicker);
+app.component('Select', Select);
 
 
 
