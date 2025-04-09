@@ -11,14 +11,19 @@
                   :disabled='isConnected'
                   placeholder = "Room"
                   @keydown.enter="connexion"
+                  maxlength="20"
+                  v-tooltip.focus.top="'Room (max 20 characters)'"
                   class="p-3 border-round-sm font-bold col-12 lg:col-6 sm:col-12 md:col-12"
                 />
+               
             </div>
             <div class="col-12 text-center">
                   <InputText
                     v-model="username"
                     :disabled='isConnected'
                     placeholder="Username"
+                    v-tooltip.focus.top="'username (max 20 characters)'"
+                    maxlength="20"
                     @keydown.enter="connexion"
                     class=" p-3 border-round-sm font-bold col-12 lg:col-6 sm:col-12 md:col-12"
                   />
@@ -61,7 +66,13 @@ defineProps<{ isConnected: boolean }>();
 
 const connexion = () => {
   if (room.value && username.value) {
-     confirm1();
+
+    if(room.value.length > 20 || username.value.length > 20) {
+      toast.add({ severity: 'error', summary: 'Too long', detail: 'Username/Room too long (max 20 characters)', life: 3000 });
+    } else {
+      confirm1();
+    }
+
   } else {
     toast.add({ severity: 'error', summary: 'Empty Username/Room', detail: 'Please enter your username/room', life: 3000 });}
 };

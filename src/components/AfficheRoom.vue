@@ -7,7 +7,7 @@
                         <div class="col-12 text-center"><i class="pi pi-user"></i> Username: {{ username }}</div>
                         <div class="col-12 text-center">
                         <i class="pi pi-home"></i> Connected Users: 
-                            <Select placeholder="connected user" :options="connectedUser">
+                            <Select placeholder="connected users" :options="connectedUser" >
                                 <template #empty>
                                    No connected user
                                 </template>
