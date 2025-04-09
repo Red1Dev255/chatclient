@@ -129,6 +129,16 @@ const sendMessage = () => {
 
   if (message.value.trim() !== "") {
 
+    if (message.value.length > 214) {
+      toast.add({
+        severity: "error",
+        summary: "Too long",
+        detail: "Message too long (max 214 characters)",
+        life: 3000,
+      });
+      return;
+    }
+
     let encryptedMessagesRoom = ref<Array<MessageUser>>([]);
     
     for (const userKey of usersPublicKeys.value) {
