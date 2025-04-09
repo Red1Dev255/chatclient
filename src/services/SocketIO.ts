@@ -7,10 +7,10 @@ import { ref } from "vue";
 const socketHost = import.meta.env.VITE_SOCKET_HOST;
 const socketPort = import.meta.env.VITE_SOCKET_PORT;
 
-let socketUrl = `https://${socketHost}`;  
+let socketUrl = `${socketHost}`;  
 
 if (socketPort) {
-  socketUrl = `https://${socketHost}:${socketPort}`;
+  socketUrl = `${socketHost}:${socketPort}`;
 }
 
 const socket = ref<Socket | null>(null);
