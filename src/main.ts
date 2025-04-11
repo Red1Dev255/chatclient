@@ -17,24 +17,26 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Panel from 'primevue/panel';
-
 import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
-
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import FloatLabel from 'primevue/floatlabel';
 import  Popover  from "primevue/popover";
 import Menu from "primevue/menu";
 import Menubar from "primevue/menubar";
-
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import '../node_modules/vue3-emoji-picker/dist/style.css';
 import EmojiPicker from 'vue3-emoji-picker';
+import Select from 'primevue/select';
+import router from './router/routes.ts';
+import { Ripple } from 'primevue';
+import { createPinia } from 'pinia'
 
 
 const app = createApp(App);
+app.use(router);
 app.use(PrimeVue, {
     theme: {
         preset: Aura
@@ -45,6 +47,7 @@ app.use(ConfirmationService);
 app.use(ToastService);
 app.use(DialogService);
 app.directive('tooltip', Tooltip);
+app.directive('ripple', Ripple);
 
 app.component('Card', Card);
 app.component('InputText', InputText);
@@ -62,7 +65,9 @@ app.component('Menubar', Menubar);
 app.component('InputGroup', InputGroup);
 app.component('InputGroupAddon', InputGroupAddon);
 app.component('EmojiPicker', EmojiPicker);
+app.component('Select', Select);
 
-
+const pinia = createPinia()
+app.use(pinia)
 
 app.mount('#app');
