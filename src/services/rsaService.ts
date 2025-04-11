@@ -12,30 +12,33 @@ export const generateRSAKeys = () => {
   };
 };
 
-/**
- * Fonction pour chiffrer un message avec la clé publique RSA
- * @param publicKeyPem La clé publique en format PEM
- * @param message Le message à chiffrer
- * @returns Le message chiffré en base64
- */
 export const encryptMessage = (publicKeyPem: string, message: string): string => {
   const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
-  const encrypted = publicKey.encrypt(message, 'RSA-OAEP');
-  return forge.util.encode64(encrypted); // Retourne le message chiffré en base64
+  try {
+    const encrypted = publicKey.encrypt(message, 'RSA-OAEP');
+    if (!encrypted) {
+      throw new Error('Erreur lors du chiffrement du message');
+    }
+    // console.log('Message chiffré:', forge.util.encode64(encrypted));  // Pour débugger
+    return forge.util.encode64(encrypted); // Retourne le message chiffré en base64
+  } catch (error) {
+    console.error('Erreur dans le chiffrement:', error);
+    throw error;
+  }
 };
 
-
-/**
- * Fonction pour déchiffrer un message avec la clé privée RSA
- * @param privateKeyPem La clé privée en format PEM
- * @param encryptedMessage Le message chiffré en base64
- * @returns Le message déchiffré
- */
 export const decryptMessage = (privateKeyPem: string, encryptedMessage: string): string => {
   const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
-  const decodedMessage = forge.util.decode64(encryptedMessage);
-  const decrypted = privateKey.decrypt(decodedMessage, 'RSA-OAEP');
-  return decrypted; // Retourne le message déchiffré
-}
-
-
+  try {
+    const decodedMessage = forge.util.decode64(encryptedMessage);
+    const decrypted = privateKey.decrypt(decodedMessage, 'RSA-OAEP');
+    if (!decrypted) {
+      throw new Error('Erreur lors du déchiffrement du message');
+    }
+    // console.log('Message déchiffré:', decrypted);  // Pour débugger
+    return decrypted; // Retourne le message déchiffré
+  } catch (error) {
+    console.error('Erreur dans le déchiffrement:', error);
+    throw error;
+  }
+};

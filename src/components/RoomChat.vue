@@ -1,71 +1,39 @@
 <template>
+  <ConfirmDialog></ConfirmDialog>
   <Toast />
-
-
-
-  <div class="mt-2">
-    <Panel header="Connexion" toggleable :collapsed="!collapsed">
-      <UserConnexion
-        @joinRoomEmit="handleJoinRoom"
-        :isConnected="isConnected"
-      />
-    </Panel>
-  </div>
-
-
-          
-
-  <AfficheRoom :room="roomLocal" :connected-user="connectedUser" :username="usernameLocal" />
+  <AfficheRoom :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
   <div class="mt-2">
     <Card>
       <template #title>
-        <div class="text-center">
-            <Button @click="getInformations" v-tooltip="'Informations'" icon="pi pi-info-circle" class="mr-1"/>
-            <Button @click="confirmDisconnect" v-tooltip="'Disconnect'" :disabled="!isConnected" class="mr-1" icon="pi pi-arrow-circle-right" />
+        <div class="grid">
+          <i class="col-11 inline-block p-4 pi pi-comments"><b class="ml-2">MESSAGES</b></i>
+         <span class="text-right col-1">
+           <Button icon="pi pi-sign-out mr-0" v-tooltip.left="'Disconnect'" rounded variant="outlined"  @click="confirmDisconnect"  />
+         </span>
         </div>
+
       </template>
+
       <template #content>
-        <div>
+        <div class="mt-2">
           <InputGroup>
             <InputText
               v-model="message"
               placeholder="Votre message"
               @keydown.enter="sendMessage"
-              :disabled="!isConnected"
               maxlength="214"
             />
-            <!-- <InputGroupAddon>
-              <AfficheEmoji
-                v-model="message"
-                :isConnected="isConnected"
-                :disabled="!isConnected"
-              />
-            </InputGroupAddon> -->
             <InputGroupAddon>
               <Button
                 @click="sendMessage"
                 label="📨"
                 class="bg-transparent border-none p-3"
-                :disabled="!isConnected"
                 v-tooltip.bottom="'Send'"
-                :class="{ 'p-button-click': isConnected }"
               />
             </InputGroupAddon>
           </InputGroup>
         </div>
-
-        <div class="m-2">
-          <Message
-            variant="simple"
-            size="small"
-            :severity="disabled ? 'error' : 'Success'"
-            >{{
-              !isConnected ? "A connection is required to send messages" : ""
-            }}</Message
-          >
-        </div>
-
-        <MessageUser :message="messages" :myUsername="usernameLocal" />
+        <MessageUser/>
       </template>
     </Card>
   </div>
@@ -73,59 +41,40 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import axios from "axios";
 import socket from "../services/SocketIO";
-import UserConnexion from "./UserConnexion.vue";
+// import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import {
-  generateRSAKeys,
   decryptMessage,
   encryptMessage,
 } from "../services/rsaService";
+import { useRouter } from "vue-router";
+import {getUrlDisconnect} from "../services/UtilsFunctions";
 
-import {getUrlLogin, getUrlDisconnect, getMessageInformation} from "../services/UtilsFunctions";
-import axios from "axios";
 
-const { privateKey, publicKey } = generateRSAKeys();
+import {ChatStore} from '../stores/chatStore'
+const piniaStore = ChatStore() 
+
 
 const confirm = useConfirm();
 const toast = useToast();
-
-const roomLocal = ref("");
-const usernameLocal = ref("");
-const connectedUser = ref(Array<string>());
-
+const router = useRouter();
 const message = ref("");
-const disabled = ref(true);
-const isConnected = ref(false);
-
-interface MessageUserDecrypted {
-  username: string;
-  message: string;
-}
-
-interface UserKey {
-  username: string;
-  publicKey: string;
-}
+const userCount = computed(() => piniaStore.connectedUsers.length);
 
 interface MessageUser {
   username: string;
   encryptedMessage: string;
 }
 
-const usersPublicKeys = ref<Array<UserKey>>([]);
-const messages = ref<Array<MessageUserDecrypted>>([]);
-
-const collapsed = computed(() => {
-  return disabled.value;
-});
-
 //////////////////////////////////////////////////// send de message
 
 const sendMessage = () => {
+
 
   if (message.value.trim() !== "") {
 
@@ -138,12 +87,13 @@ const sendMessage = () => {
       });
       return;
     }
-
     let encryptedMessagesRoom = ref<Array<MessageUser>>([]);
-    
-    for (const userKey of usersPublicKeys.value) {
+
+      
+    for (const userKey of piniaStore.usersPublicKeys) {
       const encryptedMessage = encryptMessage(userKey.publicKey, message.value.trim() );
 
+      
       encryptedMessagesRoom.value.push({
         username: userKey.username,
         encryptedMessage: encryptedMessage,
@@ -151,8 +101,8 @@ const sendMessage = () => {
     }
 
     socket.value?.emit("newMessageSend", {
-      room: roomLocal.value,
-      username: usernameLocal.value,
+      room: piniaStore.room,
+      username: piniaStore.username,
       encryptedMessagesRoom: encryptedMessagesRoom.value,
     });
   }
@@ -161,12 +111,15 @@ const sendMessage = () => {
 
 //////////////////////////////////////////////////// get public keys
 
+
 socket.value?.on("newListKey", (data) => {
-  const usersKeys = data.usersKeys;
-  // let newConnectedUser = Array<string>();
+  const { usersKeys } = data;
   if (Array.isArray(usersKeys)) {
-    usersPublicKeys.value = usersKeys;
-    connectedUser.value = usersKeys.map((userKey) => userKey.username);
+    // usersPublicKeys.value = usersKeys;
+    piniaStore.usersPublicKeys = usersKeys;
+    const connectedUsers = usersKeys.map((userKey) => userKey.username);
+    piniaStore.connectedUsers = connectedUsers;
+
   } else {
     console.error("Error : userKeys is not an array", usersKeys);
   }
@@ -174,90 +127,44 @@ socket.value?.on("newListKey", (data) => {
 
 //////////////////////////////////////////////////// Receive message
 
+socket.value?.off("newMessage");
+
 socket.value?.on("newMessage", ({ username, encryptedMessagesRoom }) => {
 
   for (let coupleMessUser of encryptedMessagesRoom) {   
-    if (coupleMessUser.username === usernameLocal.value) {
+    if (coupleMessUser.username === piniaStore.username) {
+
       const decryptedMessage = decryptMessage(
-        privateKey,
+        piniaStore.privateKey,
         coupleMessUser.encryptedMessage
       );
-      messages.value.push({
+
+      piniaStore.messages.push({
         username: username,
         message: decryptedMessage,
       });
+
+
     }
   }
+
 });
 
-//////////////////////////////////////////////////// new Connected user
-
-const handleJoinRoom =  (data: { username: string; room: string }) => {
-
-
-  axios.post(getUrlLogin(), {
-    username: data.username,
-    room: data.room,
-    publicKey: publicKey,
-  })
-  .then(function (response) {
-
-    if(response.status === 200){
-
-      roomLocal.value = data.room;
-      usernameLocal.value = data.username;
-      message.value = "";
-      disabled.value = false;
-      messages.value = [];
-      isConnected.value = true;
-
-      socket.value?.emit("join", { username: data.username, room: data.room });
-
-      toast.add({
-        severity: "success",
-        summary: "Connected",
-        detail: response.data,
-        life: 3000,
-      });
-    } else {
-      toast.add({
-        severity: "error",
-        summary: "Error",
-        detail: response.data,
-        life: 3000,
-      });
-    }
-   
-  })
-  .catch(function (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: error.response ? error.response.data : error,
-      life: 3000,
-    });
-  });
-
-};
 
 //////////////////////////////////////////////////// disconnect
 
 const disConnect = () => {
 
   axios.post(getUrlDisconnect(), {
-    username: usernameLocal.value,
-    room: roomLocal.value
+    username: piniaStore.username,
+    room: piniaStore.room,
   })
   .then(function (response) {
-
     if(response.status === 200){
-      disabled.value = true;
-      roomLocal.value = "";
-      usernameLocal.value = "";
-      isConnected.value = false;
-      messages.value = [];
-      message.value = "";
+      piniaStore.resetSession(); // méthode dans le store
+      message.value = ""; // si message est une variable réactive locale
 
+      router.push("/closed");
       toast.add({
         severity: "success",
         summary: "Disconnected",
@@ -286,8 +193,8 @@ const disConnect = () => {
 
 const confirmDisconnect = () => {
   confirm.require({
-    message: "Are you sure you want to disconnect?",
-    header: "Confirmation",
+    message: "All your data will be lost. Are you sure?",
+    header: "Disconnect",
     icon: "pi pi-exclamation-circle",
     rejectProps: {
       label: "Cancel",
@@ -295,7 +202,7 @@ const confirmDisconnect = () => {
       outlined: true,
     },
     acceptProps: {
-      label: "Accept",
+      label: "Confirm",
       severity: "success",
     },
     accept: () => {
@@ -308,43 +215,6 @@ const confirmDisconnect = () => {
         detail: "Disconnection cancelled",
         life: 3000,
       });
-    },
-  });
-};
-
-// const handleBeforeUnload = (event:any) => {
-//   event.preventDefault();
-//   // Certains navigateurs nécessitent que cette ligne soit ajoutée pour afficher une boîte de dialogue personnalisée.
-//   socket.value?.emit("leave", { username: username.value, room: room.value });
-//   event.returnValue = "Are you sure you want to leave? Your data will be lost.";
-// };
-
-// onMounted(() => {
-//   // Ajouter l'événement avant le démontage du composant
-//   window.addEventListener('beforeunload', handleBeforeUnload);
-// });
-
-// onBeforeUnmount(() => {
-//   // Supprimer l'événement lorsque le composant est démonté
-//   window.removeEventListener('beforeunload', handleBeforeUnload);
-// });
-
-//////////////////////////////////////////////////// application informations
-
-const getInformations = () => {
-   
-  confirm.require({
-    message: getMessageInformation(),
-    header: "Confirm",
-    icon: "pi pi-exclamation-circle",
-    rejectProps: {
-      label: "Cancel",
-      severity: "danger",
-      outlined: true,
-    },
-    acceptProps: {
-      label: "I understand",
-      severity: "success",
     },
   });
 };
