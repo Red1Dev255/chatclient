@@ -6,9 +6,9 @@
     <Card>
       <template #title>
         <div class="grid">
-          <i class="col-11 inline-block p-4 pi pi-comments"><b class="ml-2">MESSAGES</b></i>
-         <span class="text-right col-1">
-           <Button icon="pi pi-sign-out mr-0" v-tooltip.left="'Disconnect'" rounded variant="outlined"  @click="confirmDisconnect"  />
+         <i class="col-9 inline-block p-4 pi pi-comments"><b class="ml-2">MESSAGES</b></i>
+         <span class="text-right col-3">
+           <Button icon="pi pi-sign-out" v-tooltip.left="'Disconnect'" rounded variant="outlined"  @click="confirmDisconnect"  />
          </span>
         </div>
 
