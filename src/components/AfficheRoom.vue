@@ -1,21 +1,24 @@
 <template>    
         <div class="mt-2">
-            <Card>
+            <Panel collapsed toggleable>
+
+            <template #header>
+                <div class="text-center">
+                    <i class="pi pi-book"><b class="ml-2">ROOM</b></i>
+                    
+                </div>
+            </template>
+            <Card >
                  <template #content>
                     <div class="grid">
                         <div class="col-12 text-center"><i class="pi pi-home"></i>  Room: {{ room }}</div>
                         <div class="col-12 text-center"><i class="pi pi-user"></i> Username: {{ username }}</div>
-                        <div class="col-12 text-center">
-                        <i class="pi pi-home"></i> Connected Users: 
-                            <Select placeholder="connected users" :options="connectedUser" >
-                                <template #empty>
-                                   No connected user
-                                </template>
-                            </Select>
-                        </div>
+                        <div class="col-12 text-center"><i class="pi pi-headphones"></i> Connected : {{ userCount }}</div>
+
                     </div>
                 </template>
             </Card>
+        </Panel>
         </div>
 </template>
 
@@ -24,7 +27,7 @@
 defineProps<{
   room: string;
   username: string;
-  connectedUser :string[];
+  userCount: number;
 }>();
 
 </script>
