@@ -5,8 +5,7 @@
     <Card>
       <template #title>
         <div class="text-center">
-          <h1 class="text-3xl font-bold">Welcome to Chat roomLocal</h1>
-          <p class="text-lg">Please enter your username and room</p>
+          <h1 class="text-3xl font-bold">🐦‍🔥 Welcome</h1>
         </div>
       </template>
       <template #content>

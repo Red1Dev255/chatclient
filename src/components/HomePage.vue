@@ -11,6 +11,7 @@
         </Tab>
     </TabList>
 </Tabs>
+
 </template>
 
 <script setup lang="ts">
@@ -28,12 +29,12 @@ const items = [
         route: '/chat'
     },
     {
-        label: 'Connected',
+        label: 'Users',
         icon: 'pi pi-fw pi-users',
         route: '/users'
     },
     {
-        label: 'Informations',
+        label: 'About',
         icon: 'pi pi-info-circle',
         route: '/informations'
     }

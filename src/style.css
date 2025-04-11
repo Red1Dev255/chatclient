@@ -2,3 +2,14 @@
   transform: scale(0.95);
   transition: transform 0.1s ease;
 }
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 90vh;
+}
+
+
+.footer {
+  padding: 1rem;
+}
