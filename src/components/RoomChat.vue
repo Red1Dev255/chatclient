@@ -1,14 +1,14 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
   <Toast />
-  <AfficheRoom :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
+  <AfficheRoom v-model:roomStatus="roomStatus" :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
   <div class="mt-2">
     <Card>
       <template #title>
         <div class="grid">
          <i class="col-9 inline-block p-4 pi pi-comments"><b class="ml-2">MESSAGES</b></i>
          <span class="text-right col-3">
-           <Button icon="pi pi-sign-out" v-tooltip.left="'Disconnect'" rounded variant="outlined"  @click="confirmDisconnect"  />
+           <Button icon="pi pi-sign-out" style="font-size: 1rem" v-tooltip.left="'Disconnect'" rounded variant="outlined"  @click="confirmDisconnect"  />
          </span>
         </div>
 
@@ -65,6 +65,8 @@ const toast = useToast();
 const router = useRouter();
 const message = ref("");
 const userCount = computed(() => piniaStore.connectedUsers.length);
+
+const roomStatus = ref(true);
 
 interface MessageUser {
   username: string;
@@ -148,6 +150,13 @@ socket.value?.on("newMessage", ({ username, encryptedMessagesRoom }) => {
     }
   }
 
+});
+
+
+/////////////////////////// change new Status room
+
+socket.value?.on("changeRoomStatus", ({status}) => {
+  roomStatus.value = status;
 });
 
 
