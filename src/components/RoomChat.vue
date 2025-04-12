@@ -1,7 +1,7 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
   <Toast />
-  <AfficheRoom v-model:roomStatus="roomStatus" :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
+  <AfficheRoom v-model:roomStatus="piniaStore.status" :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
   <div class="mt-2">
     <Card>
       <template #title>
@@ -22,12 +22,14 @@
               placeholder="Votre message"
               @keydown.enter="sendMessage"
               maxlength="214"
+               class="border-none"
             />
-            <InputGroupAddon>
+            <InputGroupAddon class="border-none">
               <Button
                 @click="sendMessage"
-                label="📨"
-                class="bg-transparent border-none p-3"
+                icon="pi pi-send"
+                rounded variant="outlined"
+                class="border-none"
                 v-tooltip.bottom="'Send'"
               />
             </InputGroupAddon>
@@ -43,7 +45,6 @@
 import { computed, ref } from "vue";
 import axios from "axios";
 import socket from "../services/SocketIO";
-// import UserConnexion from "./UserConnexion.vue";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
 import { useConfirm } from "primevue/useconfirm";
@@ -65,8 +66,6 @@ const toast = useToast();
 const router = useRouter();
 const message = ref("");
 const userCount = computed(() => piniaStore.connectedUsers.length);
-
-const roomStatus = ref(true);
 
 interface MessageUser {
   username: string;
@@ -156,7 +155,7 @@ socket.value?.on("newMessage", ({ username, encryptedMessagesRoom }) => {
 /////////////////////////// change new Status room
 
 socket.value?.on("changeRoomStatus", ({status}) => {
-  roomStatus.value = status;
+  piniaStore.status = status;
 });
 
 

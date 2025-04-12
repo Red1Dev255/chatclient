@@ -29,8 +29,8 @@ const infoList = [
         content: "This application allows you to send and receive messages in real-time with other users. You can join different chat rooms and communicate with others easily."
     },
     {
-        title: "You can create a room or join an existing one",
-        content: "You have the option to create your own chat room or join an already existing one. This way, you can choose who you want to chat with."
+        title: "Create or join an existing chat room",
+        content: "You have the option to create your own chat room or join an already existing one."
     },
     {
         title: "You can close a room to prevent others from joining",
@@ -41,8 +41,8 @@ const infoList = [
         content: "This means that all the messages you send and receive are protected using a security method called RSA encryption. Only the intended recipient can read your messages, keeping them safe from others."
     },
     {
-        title: "Data are stored temporarily",
-        content: "The informations you share in the application are only saved for a short period of time. they are not stored permanently."
+        title: "Data are stored temporarily on your device",
+        content: "Messages are stored temporarily on your device and will disappear as soon as you leave the chat"
     },
     {
         title: "If you refresh the page or leave the room, all informations will be lost",

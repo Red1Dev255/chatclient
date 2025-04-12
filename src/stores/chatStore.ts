@@ -20,6 +20,7 @@ export const ChatStore = defineStore('counter', {
     room: '',
     usersPublicKeys: Array<UserKey>(),
     messages: Array<MessageUserDecrypted>(),
+    status:true,
   }),
   
   // Getters : pour récupérer des informations dérivées
@@ -36,6 +37,7 @@ export const ChatStore = defineStore('counter', {
       this.connectedUsers = [];
       this.usersPublicKeys = [];
       this.messages = [];
+      this.status = true;
     }
   },
 })
