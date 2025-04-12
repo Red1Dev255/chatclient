@@ -16,3 +16,7 @@ export const getUrlLogin = () => {
 export const getUrlDisconnect = () => {
   return getUrl() + '/disconnect';
 }
+
+export const getUrlCloseRoom = () => {
+  return getUrl() + '/opencloseroom';
+}
