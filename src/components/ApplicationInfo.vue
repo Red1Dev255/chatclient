@@ -33,6 +33,10 @@ const infoList = [
         content: "You have the option to create your own chat room or join an already existing one. This way, you can choose who you want to chat with."
     },
     {
+        title: "You can close a room to prevent others from joining",
+        content: "This feature allows you to close a chat room, ensuring that no new participants can join. Only the current members will remain in the room."
+    },
+    {
         title: "Messages in this application are secured with RSA encryption",
         content: "This means that all the messages you send and receive are protected using a security method called RSA encryption. Only the intended recipient can read your messages, keeping them safe from others."
     },
