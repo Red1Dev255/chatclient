@@ -1,7 +1,7 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
   <Toast />
-  <AfficheRoom :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
+  <AfficheRoom v-model:roomStatus="roomStatus" :userCount="userCount" :room="piniaStore.room" :username="piniaStore.username" />
   <div class="mt-2">
     <Card>
       <template #title>
@@ -65,6 +65,8 @@ const toast = useToast();
 const router = useRouter();
 const message = ref("");
 const userCount = computed(() => piniaStore.connectedUsers.length);
+
+const roomStatus = ref(true);
 
 interface MessageUser {
   username: string;
@@ -148,6 +150,13 @@ socket.value?.on("newMessage", ({ username, encryptedMessagesRoom }) => {
     }
   }
 
+});
+
+
+/////////////////////////// change new Status room
+
+socket.value?.on("changeRoomStatus", ({status}) => {
+  roomStatus.value = status;
 });
 
 

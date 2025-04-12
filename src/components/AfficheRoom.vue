@@ -5,23 +5,27 @@
             <template #header>
                 <div class="text-center">
                     <i class="pi pi-book"><b class="ml-2">ROOM</b></i>
-                    
+                    <Button :icon="roomStatus ? 'pi pi-unlock' : 'pi pi-lock'" 
+                             v-tooltip.top="roomStatus ? 'Close the room' : 'Open the room'"
+                             rounded variant="outlined" 
+                             class="border-none"  
+                             :class="roomStatus ? 'text-green-500' : 'text-red-500'"
+                             @click="closeOpenRoom"  />
                 </div>
             </template>
             <Card >
                  <template #content>
-                    <div class="grid">
-                        <div class="col-12 text-center"><i class="pi pi-home"></i> 
+                  <div class="text-center">
+                        <div class="m-2"><i class="pi pi-home"></i> 
                              Room: {{ room }} 
-                             <Button :icon="roomStatus ? 'pi pi-lock' : 'pi pi-unlock'" 
-                             v-tooltip.top="roomStatus ? 'Close the room' : 'Open the room'"
-                             rounded variant="outlined" 
-                             class="border-none"  @click="closeOpenRoom"  />
                         </div>
-                        <div class="col-12 text-center"><i class="pi pi-user"></i> Username: {{ username }}</div>
-                        <div class="col-12 text-center"><i class="pi pi-headphones"></i> Connected : {{ userCount }}</div>
-
-                    </div>
+                        <div class="m-2">
+                          <i class="pi pi-user"></i> Username: {{ username }}
+                        </div>
+                        <div class="m-2">
+                          <i class="pi pi-headphones"></i> Connected : {{ userCount }}
+                        </div>
+                    </div>                   
                 </template>
             </Card>
         </Panel>
@@ -34,7 +38,6 @@ import { useToast } from "primevue/usetoast";
 import {getUrlCloseRoom} from "../services/UtilsFunctions";
 import axios from "axios";
 const toast = useToast();
-import { ref } from "vue";
 
 const props = defineProps<{
   room: string;
@@ -42,8 +45,10 @@ const props = defineProps<{
   userCount: number;
 }>();
 
-const roomStatus = ref(true);
-
+const roomStatus = defineModel("roomStatus", {
+  type: Boolean,
+  default: true,
+});
 
 const closeOpenRoom = ()=>{
     axios.post(getUrlCloseRoom() , {
@@ -77,6 +82,8 @@ const closeOpenRoom = ()=>{
     });
   });
 }
+
+
 
 
 </script>

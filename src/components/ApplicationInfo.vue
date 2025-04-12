@@ -10,9 +10,9 @@
                 <li v-for="info in infoList" :key="info.title">
 
                     <div>
-                        <i class="pi pi-check-circle m-2">
-                            <b class="ml-2">{{ info.title }}</b>
+                        <i class="pi pi-check-circle text-green-500 m-2">
                         </i>
+                        <i><b>{{ info.title }}</b></i>
                     </div>
                     <p>{{ info.content }}</p>
                 </li>
