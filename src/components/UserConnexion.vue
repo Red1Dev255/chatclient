@@ -2,16 +2,14 @@
 <Toast />
 <ConfirmDialog></ConfirmDialog>
   <div class="m-5">
-
     <Card>
-     
       <template #title>
          <div class="text-right">
          <Button icon="pi pi-info-circle"
-                             v-tooltip.top="'help'"
-                             rounded variant="outlined" 
-                             class="border-none"  
-                             @click="openHelp"  />
+            v-tooltip.top="'help'"
+            rounded variant="outlined" 
+            class="border-none"  
+            @click="openHelp"  />
         </div>
         <div class="text-center">
           <h1 class="text-3xl font-bold">🐦‍🔥 Welcome to Online-Chat</h1>
@@ -23,7 +21,7 @@
                 <InputText
                   v-model="room"
                   placeholder = "Room"
-                  @keydown.enter="connexion"
+                  @keydown.enter.prevent="connexion"
                   maxlength="20"
                   v-tooltip.focus.top="'Room (max 20 characters)'"
                   class="p-3 border-round-sm font-bold col-12 lg:col-6 sm:col-12 md:col-12"
@@ -36,7 +34,7 @@
                     placeholder="Username"
                     v-tooltip.focus.top="'username (max 20 characters)'"
                     maxlength="20"
-                    @keydown.enter="connexion"
+                    @keydown.enter.prevent="connexion"
                     class=" p-3 border-round-sm font-bold col-12 lg:col-6 sm:col-12 md:col-12"
                   />
             </div>
@@ -89,8 +87,6 @@ var regexUsername = /^[a-zA-Z0-9]*$/;
 const openHelp = () => {
   confirmHelp();
  };
-
- 
 
 
 const connexion = () => {
@@ -175,6 +171,7 @@ axios.post(getUrlLogin(), {
       store.username = username.value;
       store.room = room.value;
       store.privateKey = privateKey;
+      store.status = true;
     });
   } else {
     toast.add({
