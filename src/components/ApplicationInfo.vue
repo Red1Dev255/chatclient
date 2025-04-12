@@ -25,6 +25,14 @@
 
 const infoList = [
     {
+        title: "This application is a simple chat",
+        content: "This application allows you to send and receive messages in real-time with other users. You can join different chat rooms and communicate with others easily."
+    },
+    {
+        title: "You can create a room or join an existing one",
+        content: "You have the option to create your own chat room or join an already existing one. This way, you can choose who you want to chat with."
+    },
+    {
         title: "Messages in this application are secured with RSA encryption",
         content: "This means that all the messages you send and receive are protected using a security method called RSA encryption. Only the intended recipient can read your messages, keeping them safe from others."
     },

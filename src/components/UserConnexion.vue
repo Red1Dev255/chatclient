@@ -48,6 +48,9 @@
            </div>
       </template>
     </Card>
+
+    <ApplicationInfo class="mt-5" />
+    
   </div>
 </template>
 
@@ -60,6 +63,7 @@ import { getUrlLogin } from "../services/UtilsFunctions";
 import socket from "../services/SocketIO";
 import {  generateRSAKeys} from "../services/rsaService";
 import { useRouter } from 'vue-router';
+import ApplicationInfo from './ApplicationInfo.vue';
 
 
 const confirm = useConfirm();
