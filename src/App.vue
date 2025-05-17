@@ -6,7 +6,7 @@
   <div>
 
     <footer>
-        <div class="text-right mr-4">
+        <div class="text-center mr-4">
             <p>&copy; 2025 Online-Chat. All rights reserved</p>
         </div>
     </footer>

@@ -1,12 +1,11 @@
 
 <template>
-        <Button type="button" 
+        <Button 
         @click="toggle" 
-        label='😊'
-        :disabled="disabled"
+        icon="pi pi-face-smile"
         v-tooltip.bottom="'Emojis'"
-        class="bg-transparent border-none p-3"
-        :class="{'p-button-click' : isConnected}"
+        variant="outlined"
+        class="border-none p-3"
         />
         <Popover ref="op">
           <div>
@@ -17,8 +16,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-
-
 
 
 const message = defineModel<string>();
@@ -32,7 +29,5 @@ function onSelectEmoji(emoji:any) {
 const toggle = (event :Event) => {
   op.value.toggle(event);
 }
-
-defineProps<{ disabled: boolean, isConnected : boolean}>();
 
 </script>

@@ -5,6 +5,7 @@ import ConnectedUsers from '../components/ConnectedUser.vue'
 import UserConnexion from '../components/UserConnexion.vue'
 import ApplicationInfo from '../components/ApplicationInfo.vue'
 import SessionClosed from '../components/SessionClosed.vue'
+import VoteRoom from '../components/VoteRoom.vue'
 
 const routes = [
   { path: '/', component: UserConnexion },
@@ -12,6 +13,7 @@ const routes = [
   { path: '/users', component: ConnectedUsers },
   { path: '/informations', component: ApplicationInfo },
   { path: '/closed', component: SessionClosed },
+  { path: '/vote', component: VoteRoom },
 ]
 
 const router = createRouter({

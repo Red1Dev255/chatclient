@@ -10,6 +10,7 @@
          <span class="text-right col-3">
            <Button icon="pi pi-sign-out" style="font-size: 1rem" v-tooltip.left="'Disconnect'" rounded variant="outlined"  @click="confirmDisconnect"  />
          </span>
+         
         </div>
 
       </template>
@@ -21,18 +22,22 @@
               v-model="message"
               placeholder="Votre message"
               @keydown.enter="sendMessage"
-              maxlength="214"
-               class="border-none"
+               class="border-none p-3"
             />
             <InputGroupAddon class="border-none">
               <Button
                 @click="sendMessage"
                 icon="pi pi-send"
-                rounded variant="outlined"
-                class="border-none"
+                variant="outlined"
+                class="border-none p-3"
                 v-tooltip.bottom="'Send'"
               />
             </InputGroupAddon>
+
+            <InputGroupAddon class="border-none">
+              <AfficheEmoji  v-model="message"/>
+            </InputGroupAddon>
+
           </InputGroup>
         </div>
         <MessageUser/>
@@ -47,6 +52,7 @@ import axios from "axios";
 import socket from "../services/SocketIO";
 import MessageUser from "./MessageUser.vue";
 import AfficheRoom from "./AfficheRoom.vue";
+import AfficheEmoji from "./AfficheEmoji.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import {
@@ -56,8 +62,10 @@ import {
 import { useRouter } from "vue-router";
 import {getUrlDisconnect} from "../services/UtilsFunctions";
 
-
 import {ChatStore} from '../stores/chatStore'
+
+import {decryptAES , encryptAES, exportAESKey, exportIV, getDecryptedAesValue} from '../services/AesService'
+
 const piniaStore = ChatStore() 
 
 
@@ -70,34 +78,49 @@ const userCount = computed(() => piniaStore.connectedUsers.length);
 interface MessageUser {
   username: string;
   encryptedMessage: string;
+  encryptedAesKey?: string; 
+  encryptedIV: string;
 }
 
 //////////////////////////////////////////////////// send de message
 
-const sendMessage = () => {
+const sendMessage = async () => {
 
 
   if (message.value.trim() !== "") {
 
-    if (message.value.length > 214) {
-      toast.add({
-        severity: "error",
-        summary: "Too long",
-        detail: "Message too long (max 214 characters)",
-        life: 3000,
-      });
-      return;
-    }
     let encryptedMessagesRoom = ref<Array<MessageUser>>([]);
 
       
     for (const userKey of piniaStore.usersPublicKeys) {
-      const encryptedMessage = encryptMessage(userKey.publicKey, message.value.trim() );
 
       
+      if (!piniaStore.aesKey || !piniaStore.iv) {
+        toast.add({
+          severity: "error",
+            summary: "Key Missing",
+            detail: "Key or IV is missing(Error in AES key generation)",
+            life: 3000,
+          });
+          return;
+        }
+
+        //generer AES key and IV
+      const aesKeyString = await exportAESKey(piniaStore.aesKey);
+      const ivString = exportIV(piniaStore.iv);
+
+      //encrypt AES key and IV with RSA public key
+      const encryptedAesKey = encryptMessage(userKey.publicKey, aesKeyString); 
+      const encryptedIV = encryptMessage(userKey.publicKey, ivString);
+      
+      //encrypt message with AES
+      const encrypteAesMessage = await encryptAES(message.value.trim(), piniaStore.aesKey, piniaStore.iv);
+
       encryptedMessagesRoom.value.push({
         username: userKey.username,
-        encryptedMessage: encryptedMessage,
+        encryptedAesKey: encryptedAesKey,
+        encryptedIV: encryptedIV,
+        encryptedMessage: encrypteAesMessage,
       });
     }
 
@@ -130,22 +153,39 @@ socket.value?.on("newListKey", (data) => {
 
 socket.value?.off("newMessage");
 
-socket.value?.on("newMessage", ({ username, encryptedMessagesRoom }) => {
+socket.value?.on("newMessage", async ({ username, encryptedMessagesRoom }) => {
+
 
   for (let coupleMessUser of encryptedMessagesRoom) {   
     if (coupleMessUser.username === piniaStore.username) {
 
-      const decryptedMessage = decryptMessage(
+      // Decrypt the AES key and IV using the private RSA key
+      const decryptedAesKey = decryptMessage(
         piniaStore.privateKey,
-        coupleMessUser.encryptedMessage
+        coupleMessUser.encryptedAesKey
       );
 
+      // Decrypt the AES IV using the private RSA key
+      const decryptedIV = decryptMessage(
+        piniaStore.privateKey,
+        coupleMessUser.encryptedIV
+      );
+
+
+      const receivedAesKey = await getDecryptedAesValue(decryptedAesKey, decryptedIV);
+
+      // Decrypt the message using the decrypted AES key and IV
+      const decryptedMessage = await decryptAES(
+        coupleMessUser.encryptedMessage,
+        await receivedAesKey.cryptoKey,
+        receivedAesKey.iv
+      );
+ 
+      // Add the message 
       piniaStore.messages.push({
         username: username,
         message: decryptedMessage,
       });
-
-
     }
   }
 
@@ -226,5 +266,10 @@ const confirmDisconnect = () => {
     },
   });
 };
+
+
+window.addEventListener("beforeunload", (event) => {
+    event.preventDefault();
+});
 
 </script>

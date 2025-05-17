@@ -37,9 +37,9 @@ const infoList = [
         content: "This feature allows you to close a chat room, ensuring that no new participants can join. Only the current members will remain in the room."
     },
     {
-        title: "Messages in this application are secured with RSA encryption",
-        content: "This means that all the messages you send and receive are protected using a security method called RSA encryption. Only the intended recipient can read your messages, keeping them safe from others."
-    },
+        title: "Messages in this application are secured with RSA and AES encryption",
+        content: "This means that all the messages you send and receive are protected using a security method (RSA and AES), only the intended recipient can read your messages, keeping them safe from others."
+        +"To ensure a high level of security for your messages, we use a combination of two encryption methods: RSA and AES. RSA securely exchanges the encryption key, while AES encrypts the actual message content."},
     {
         title: "Data are stored temporarily on your device",
         content: "Messages are stored temporarily on your device and will disappear as soon as you leave the chat"

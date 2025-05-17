@@ -12,7 +12,7 @@
             @click="openHelp"  />
         </div>
         <div class="text-center">
-          <h1 class="text-3xl font-bold">🐦‍🔥 Welcome to Online-Chat</h1>
+          <i class="pi pi-comment" style="font-size: 1.5rem"> Online-Chat</i>
         </div>
       </template>
       <template #content>
@@ -71,6 +71,7 @@ import socket from "../services/SocketIO";
 import {  generateRSAKeys} from "../services/rsaService";
 import { useRouter } from 'vue-router';
 import ApplicationInfo from './ApplicationInfo.vue';
+import {generateAESKey, generateIV} from '../services/AesService';
 
 
 const confirm = useConfirm();
@@ -79,6 +80,7 @@ const toast = useToast();
 const room = ref('');
 const username = ref('');
 const { privateKey, publicKey } = generateRSAKeys();
+
 import {ChatStore} from '../stores/chatStore'
 const store = ChatStore();
 var regexRoom = /^[a-zA-Z0-9@#$%^&*(),.?":{}|<>-_+=]*$/; 
@@ -165,13 +167,15 @@ axios.post(getUrlLogin(), {
   
   if(response.status === 200){
     socket.value?.emit("join", { username: username.value, room: room.value });
-    socket.value?.on("joinSuccess", (data) => {
-      console.log("Connected to Room", data);
+    socket.value?.on("joinSuccess", async () => {
       router.push("/chat")
       store.username = username.value;
       store.room = room.value;
       store.privateKey = privateKey;
       store.status = true;
+      const key = await generateAESKey();  
+      store.aesKey = key;
+      store.iv = generateIV();
     });
   } else {
     toast.add({

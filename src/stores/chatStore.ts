@@ -21,6 +21,8 @@ export const ChatStore = defineStore('counter', {
     usersPublicKeys: Array<UserKey>(),
     messages: Array<MessageUserDecrypted>(),
     status:true,
+    aesKey: null as CryptoKey | null,  // Clé AES stockée directement
+    iv: null as Uint8Array | null,     // IV stocké tel quel
   }),
   
   // Getters : pour récupérer des informations dérivées
@@ -38,6 +40,8 @@ export const ChatStore = defineStore('counter', {
       this.usersPublicKeys = [];
       this.messages = [];
       this.status = true;
+      this.aesKey = null; // Réinitialiser la clé AES
+      this.iv = null;    // Réinitialiser l'IV
     }
   },
 })

@@ -33,6 +33,11 @@ const items = [
         icon: 'pi pi-fw pi-users',
         route: '/users'
     },
+    // {
+    //     label: 'Voting',
+    //     icon: 'pi pi-megaphone',
+    //     route: '/vote'
+    // },
     {
         label: 'About',
         icon: 'pi pi-info-circle',
